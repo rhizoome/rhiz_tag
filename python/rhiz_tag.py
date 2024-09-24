@@ -36,6 +36,7 @@ def to_tag(date: datetime) -> str:
     year = date.year - base_time.year
     month = date.month
     week = date.isocalendar()[1]
+    # Handle underflows and overflows in ISO calendar
     if month == 1 and week > 51:
         week = 0
     if month == 12 and week < 2:
@@ -56,6 +57,9 @@ def to_datetimes(tag: str) -> (datetime, datetime):
     week = rev_x(tag[1])
     tick = rev_x(tag[2])
 
+    # fromisocalendar does not correctly round-trip, thanks to our extension
+    # of the ISO calendar to week 0 and [last week of the year] + 1, we
+    # can avoid the round-trip bugs.
     if week == 0:
         monday = datetime.fromisocalendar(year, 1, 1) - a_week
     else:
