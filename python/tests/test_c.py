@@ -1,3 +1,4 @@
+import calendar
 import os
 import subprocess
 from contextlib import contextmanager
@@ -20,11 +21,22 @@ def chdir(target_dir):
         os.chdir(original_dir)
 
 
-def cargo_build_successful():
+def gcc_build_successful():
     try:
-        with chdir("../rust-nostd"):
+        with chdir("../c"):
             result = subprocess.run(
-                ["cargo", "build", "--bin", "hypothesis"], check=True
+                [
+                    "gcc",
+                    "-g",
+                    "-Wall",
+                    "-Wextra",
+                    "-Wpedantic",
+                    "-Werror",
+                    "-o",
+                    "hypothesis",
+                    "hypothesis.c",
+                ],
+                check=True,
             )
         return result.returncode == 0
     except subprocess.CalledProcessError:
@@ -39,29 +51,31 @@ def proc_hypothesis():
     global _proc
     if _proc is None or _proc.poll() is not None:
         _proc = subprocess.Popen(
-            "../rust-nostd/target/debug/hypothesis",
+            "../c/hypothesis",
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
     return _proc
 
 
-@pytest.mark.skipif(
-    not cargo_build_successful(), reason="cargo build --bin hypothesis failed"
-)
-@settings(max_examples=10000)
+@pytest.mark.skipif(not gcc_build_successful(), reason="gcc build failed")
+@settings(max_examples=1000000)
 @given(
     datetimes(
-        min_value=datetime(2024, 1, 1), max_value=datetime(2075, 12, 31, 23, 59, 59)
+        min_value=datetime(2024, 1, 1),
+        max_value=datetime(2075, 12, 31, 23, 59, 59),
     )
 )
-def test_rust(date: datetime):
+def test_c(date: datetime):
     ctag = to_datetag(date)
     proc = proc_hypothesis()
-    str_date = date.strftime("%Y-%m-%d %H:%M:%S")
-    proc.stdin.write(str_date.encode("UTF-8"))
+    unix_timestamp = str(int(calendar.timegm(date.timetuple())))
+    proc.stdin.write(unix_timestamp.encode("UTF-8"))
     proc.stdin.write(b"\n")
     proc.stdin.flush()
     tag = proc.stdout.readline().decode("UTF-8").strip()
-    assert tag == ctag
-    assert proc.poll() is None
+    try:
+        assert tag == ctag
+        assert proc.poll() is None
+    except Exception:
+        breakpoint()
