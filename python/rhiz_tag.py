@@ -32,7 +32,7 @@ def rev_x(base_str: str, alphabet=base54):
     return num
 
 
-def to_tag(date: datetime) -> str:
+def to_datetag(date: datetime) -> str:
     year = date.year - base_time.year
     month = date.month
     week = date.isocalendar()[1]
@@ -46,13 +46,17 @@ def to_tag(date: datetime) -> str:
     week_eve = datetime(eve_est.year, eve_est.month, eve_est.day)
     delta = date - week_eve
     tick = int(delta.total_seconds() / week_tick)
+    return f"{base_x(year)}{base_x(week)}{base_x(tick)}"
+
+
+def to_tag(date: datetime) -> str:
+    tag = to_datetag(date)
     rand = random.randint(0, rand_range)
     rand_base = base_x(rand)
-    return f"{base_x(year)}{base_x(week)}{base_x(tick)}-{rand_base}"
+    return f"{tag}-{rand_base}"
 
 
 def to_datetimes(tag: str) -> (datetime, datetime):
-    rhiz, _, _ = tag.partition("-")
     year = 2024 + rev_x(tag[0])
     week = rev_x(tag[1])
     tick = rev_x(tag[2])

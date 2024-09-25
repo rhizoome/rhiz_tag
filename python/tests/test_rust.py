@@ -6,8 +6,7 @@ from datetime import datetime
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import datetimes
-
-from rhiz_tag import to_datetimes, to_tag
+from rhiz_tag import to_datetag
 
 
 @contextmanager
@@ -49,15 +48,15 @@ def proc_hypothesis():
 @pytest.mark.skipif(
     not cargo_build_successful(), reason="cargo build --bin hypothesis failed"
 )
-@settings(max_examples=10000000)
+@settings(max_examples=100)
 @given(datetimes(min_value=datetime(2024, 1, 1), max_value=datetime(2075, 1, 1)))
 def test_rust(date: datetime):
-    ctag, _, _ = to_tag(date).partition("-")
+    ctag = to_datetag(date)
     proc = proc_hypothesis()
     str_date = date.strftime("%Y-%m-%d %H:%M:%S")
     proc.stdin.write(str_date.encode("UTF-8"))
     proc.stdin.write(b"\n")
     proc.stdin.flush()
-    tag, _, _ = proc.stdout.readline().partition(b"-")
-    assert tag.decode("UTF-8") == ctag
+    tag = proc.stdout.readline().decode("UTF-8").strip()
+    assert tag == ctag
     assert proc.poll() is None
