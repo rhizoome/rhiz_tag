@@ -3,10 +3,6 @@ name = "rhiz_tag"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-chrono = "0.4.38"
-rand = "0.8.5"
-
 [lib]
 name = "rhiz_tag"
 path = "src/lib.rs"
@@ -14,3 +10,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "hypothesis"
 path = "src/bin/hypothesis.rs"
+
+[dependencies]
+chrono = { version = "0.4.38", default-features = false }

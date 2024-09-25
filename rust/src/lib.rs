@@ -1,35 +1,98 @@
-use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveDateTime, TimeZone, Utc};
+#![no_std]
+use core::fmt::{self, Result as FmtResult};
 
-const BASE54: &str = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ34689";
+use chrono::{
+    offset::LocalResult, DateTime, Datelike, Duration, NaiveDate, NaiveDateTime, TimeZone, Utc,
+};
+
+type Base54Type = [u8; 54];
+const BASE54: Base54Type = *b"abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ34689";
 const WEEK_TICK: i64 = 11631; // Number of seconds in one tick (a 52nd of a week)
 
+#[derive(Debug)]
+pub enum TagError {
+    BufferOverflowError,
+    DateConversionError,
+}
+
+impl fmt::Display for TagError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> FmtResult {
+        match self {
+            TagError::BufferOverflowError => write!(f, "Buffer overflow error"),
+            TagError::DateConversionError => write!(f, "Date conversion error"),
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TagBuf([u8; 3]);
+
+impl TagBuf {
+    /// Creates a new `TagBuf` initialized with zeros.
+    pub fn new() -> Self {
+        TagBuf([0; 3])
+    }
+
+    /// Access the internal buffer.
+    pub fn as_mut(&mut self) -> &mut [u8; 3] {
+        &mut self.0
+    }
+
+    /// Access the internal buffer (immutable).
+    pub fn as_ref(&self) -> &[u8; 3] {
+        &self.0
+    }
+}
+
 /// Returns the base time (January 1, 2024, at 00:00:00 UTC).
-fn base_time() -> DateTime<Utc> {
-    Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap()
+fn base_time() -> Result<DateTime<Utc>, TagError> {
+    match Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0) {
+        LocalResult::Single(date_time) => Ok(date_time),
+        LocalResult::Ambiguous(_, _) => Err(TagError::DateConversionError),
+        LocalResult::None => Err(TagError::DateConversionError),
+    }
+}
+
+pub trait BufAdd {
+    fn add(&mut self, char: u8) -> Result<(), TagError>;
+}
+
+struct StrBuf<'a> {
+    offset: usize,
+    buf: &'a mut TagBuf,
+}
+
+impl BufAdd for StrBuf<'_> {
+    fn add(&mut self, char: u8) -> Result<(), TagError> {
+        if self.offset >= self.buf.as_ref().len() {
+            return Err(TagError::BufferOverflowError);
+        }
+        self.buf.as_mut()[self.offset] = char;
+        self.offset += 1;
+        Ok(())
+    }
 }
 
 /// Converts an integer to a string using the custom base54 alphabet.
-fn base_x(mut num: i32, alphabet: &str) -> String {
-    let base = alphabet.chars().count() as i32;
-    let chars: Vec<char> = alphabet.chars().collect();
+fn base_x(buf: &mut impl BufAdd, mut num: i32, alphabet: &Base54Type) -> Result<(), TagError> {
+    let base = alphabet.len() as i32;
 
     if num == 0 {
-        return chars[0].to_string();
+        buf.add(alphabet[0])?;
+        return Ok(());
     }
 
-    let mut base_x_result = Vec::new();
     while num > 0 {
         let remainder = (num % base) as usize;
         num /= base;
-        base_x_result.push(chars[remainder]);
+        buf.add(alphabet[remainder])?;
     }
-    base_x_result.reverse();
-    base_x_result.iter().collect()
+    Ok(())
 }
 
-/// Generates a unique tag from a `DateTime<Utc>` object.
-pub fn to_datetag(date: NaiveDateTime) -> String {
-    let base_time = base_time();
+/// Generates a unique tag from a `NaiveDateTime` object. Provide a struct that implements trait `BufAdd`.
+pub fn to_datetag_buf(buf: &mut impl BufAdd, date: NaiveDateTime) -> Result<(), TagError> {
+    let base_time = base_time()?;
     let year = date.year() - base_time.year();
 
     let month = date.month();
@@ -47,17 +110,21 @@ pub fn to_datetag(date: NaiveDateTime) -> String {
     let eve_est = date - Duration::days(day);
 
     let week_eve = NaiveDate::from_ymd_opt(eve_est.year(), eve_est.month(), eve_est.day())
-        .unwrap()
+        .ok_or(TagError::DateConversionError)?
         .and_hms_opt(0, 0, 0)
-        .unwrap();
+        .ok_or(TagError::DateConversionError)?;
 
     let delta = date - week_eve;
     let tick = (delta.num_seconds() / WEEK_TICK) as i32;
+    base_x(buf, year, &BASE54)?;
+    base_x(buf, week as i32, &BASE54)?;
+    base_x(buf, tick, &BASE54)?;
+    Ok(())
+}
 
-    format!(
-        "{}{}{}",
-        base_x(year, BASE54),
-        base_x(week as i32, BASE54),
-        base_x(tick, BASE54),
-    )
+/// Generates a unique tag from a `NaiveDateTime` object. .
+pub fn to_datetag_array(buf: &mut TagBuf, date: NaiveDateTime) -> Result<(), TagError> {
+    let mut str_buf = StrBuf { offset: 0, buf };
+    to_datetag_buf(&mut str_buf, date)?;
+    Ok(())
 }
