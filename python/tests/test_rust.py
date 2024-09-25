@@ -21,7 +21,7 @@ def chdir(target_dir):
 
 def cargo_build_successful():
     try:
-        with chdir("../rust"):
+        with chdir("../rust-nostd"):
             result = subprocess.run(
                 ["cargo", "build", "--bin", "hypothesis"], check=True
             )
@@ -38,7 +38,7 @@ def proc_hypothesis():
     global _proc
     if _proc is None or _proc.poll() is not None:
         _proc = subprocess.Popen(
-            "../rust/target/debug/hypothesis",
+            "../rust-nostd/target/debug/hypothesis",
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
