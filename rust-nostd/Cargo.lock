@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rhiz_tag"
+name = "rhiz_tag_nostd"
 version = "0.1.0"
 dependencies = [
  "chrono",
