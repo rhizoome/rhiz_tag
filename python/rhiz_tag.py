@@ -101,11 +101,11 @@ try:
         """
         pass
 
-    @cli.command()
+    @cli.command(help="Generate a tag")
     def tag():
         print(to_tag(datetime.now()))
 
-    @cli.command()
+    @cli.command(help="Find the date of a tag")
     @click.argument("tag", type=str)
     def date(tag):
         print(to_datetime(tag))
