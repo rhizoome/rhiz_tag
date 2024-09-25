@@ -1,7 +1,7 @@
 # Rhiz-Tag
 
 Generate a Ubiquitous General Purpose Tag to use in your notes, zettelkasten,
-field research or archival project (photos, drafts, scrapbooking). Use it as a
+field research or archival projects (photos, drafts, scrapbooking). Use it as a
 date-identifier for your note's header or as a reference. You can use it between
 media: Digital, typewritten, or handwritten. Reference a note in a book, in a
 paper, or in your source- code. Everything with the same tag is connected.
