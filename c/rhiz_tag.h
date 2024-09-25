@@ -20,10 +20,8 @@ struct TableEntryCorrected {
 // external dependencies.
 
 // This program assumes the system is always in UTC. When converting a date to a
-// Unix timestamp, treat everything as UTC and disregard timezones. The pre-
-// calculated table might be slightly off in the future due to leap seconds.
-// However, given the tick resolution of 11,631 seconds, the impact is negligible.
-// If necessary, the table can be regenerated using `table.py`.
+// Unix timestamp, treat everything as UTC and disregard timezones. If necessary,
+// the table can be regenerated using `table.py`.
 
 const char BASE54[] = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ34689";
 const int BASE54_LEN = 54; 
