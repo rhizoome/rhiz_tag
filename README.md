@@ -14,8 +14,9 @@ consists of two parts:
    - **First Character (Year)**: Represents the year, starting from 2024, and
      can span 54 years before wrapping around.
    - **Second Character (Week)**: Represents the ISO week of the year. While
-     there are typically 52 weeks, it can extend up to 54 weeks in special cases
-     like leap years or calendar anomalies.
+     there are typically 52 weeks, the encoding can extend up to 54 characters
+     (hence the use of base54) in cases where weeks are shifted, such as when week
+     0 or week 53 is used for certain transitions between years.
    - **Third Character (Tick within Week)**: Divides each week into 52 equal
      parts, allowing for precise identification within the week.
 
