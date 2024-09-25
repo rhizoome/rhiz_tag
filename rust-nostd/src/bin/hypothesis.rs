@@ -1,7 +1,7 @@
 use std::str;
 
 use chrono::NaiveDateTime;
-use rhiz_tag::{to_datetag_array, TagBuf};
+use rhiz_tag_nostd::{to_datetag_array, TagBuf};
 use std::io::{self, BufRead};
 
 fn main() {

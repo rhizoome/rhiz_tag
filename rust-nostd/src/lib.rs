@@ -1,3 +1,18 @@
+//! Generate a Ubiquitous General Purpose Tag to use in your notes, zettelkasten,
+//! field research or archival project (photos, drafts, scrapbooking). Use it as a
+//! date-identifier for your note's header or as a reference. You can use it between
+//! media: Digital, typewritten, or handwritten. Reference a note in a book, in a
+//! paper, or in your source- code. Everything with the same tag is connected.
+//!
+//! The tag contains a date, based on base54: The first letter is the year,
+//! beginning from 2024, the second letter is the week of the year using ISO weeks.
+//! The third letter is a 52nd of a week. It's primarily meant to give the tags an
+//! order, but if you use the tags daily, you learn to read them.
+//!
+//! Example: `aQu-TWr` (a: year 2024, Q: week 39, u: tick 19)
+//!
+//! This is the no_std implementation.
+
 #![no_std]
 use core::fmt::{self, Result as FmtResult};
 
@@ -54,6 +69,7 @@ fn base_time() -> Result<DateTime<Utc>, TagError> {
 }
 
 pub trait BufAdd {
+    /// Add character to the buffer and increment index
     fn add(&mut self, char: u8) -> Result<(), TagError>;
 }
 
@@ -74,7 +90,7 @@ impl BufAdd for StrBuf<'_> {
 }
 
 /// Converts an integer to a string using the custom base54 alphabet.
-fn base_x(buf: &mut impl BufAdd, mut num: i32, alphabet: &Base54Type) -> Result<(), TagError> {
+pub fn base_x(buf: &mut impl BufAdd, mut num: i32, alphabet: &Base54Type) -> Result<(), TagError> {
     let base = alphabet.len() as i32;
 
     if num == 0 {
@@ -122,7 +138,7 @@ pub fn to_datetag_buf(buf: &mut impl BufAdd, date: NaiveDateTime) -> Result<(), 
     Ok(())
 }
 
-/// Generates a unique tag from a `NaiveDateTime` object. .
+/// Generates a unique tag from a `NaiveDateTime` object. Provide a `TagBuf` as buffer.
 pub fn to_datetag_array(buf: &mut TagBuf, date: NaiveDateTime) -> Result<(), TagError> {
     let mut str_buf = StrBuf { offset: 0, buf };
     to_datetag_buf(&mut str_buf, date)?;

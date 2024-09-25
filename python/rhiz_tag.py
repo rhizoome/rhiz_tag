@@ -79,7 +79,8 @@ def to_datetimes(tag: str) -> (datetime, datetime):
 def to_datetime(tag: str) -> str:
     dt = to_datetimes(tag)
     week = rev_x(tag[1])
-    return f"{dt[0]} - {dt[1]} (Week: {week})"
+    tick = rev_x(tag[2])
+    return f"{dt[0]} - {dt[1]} (Week: {week}, Tick: {tick})"
 
 
 try:
